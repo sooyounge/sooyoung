@@ -3,7 +3,7 @@
 phat.D=67/1000
 phat.U<-160/1000
 diff.prop<-phat.D-phat.U
-diff.prop
+diff.prop 
 
 labels<-c(rep("LateArrival",227),rep("OnTime",1773))
 
