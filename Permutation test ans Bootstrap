@@ -1,0 +1,147 @@
+#1
+#Randomization Test
+phat.D=67/1000
+phat.U<-160/1000
+diff.prop<-phat.D-phat.U
+diff.prop
+
+labels<-c(rep("LateArrival",227),rep("OnTime",1773))
+
+#Lets repeat this 5000 time to create a randomization dist.
+n = 5000
+rand.dist<-rep(NA,n)
+for (i in 1:n){
+sample.labels<-sample(labels)
+company.D<-sample.labels[1:1000]
+company.U<-sample.labels[1001:2000]
+table.D<-table(company.D)
+p_hat.D<-table.D["LateArrival"]/1000
+table.U<-table(company.U)
+p_hat.U<-table.U["LateArrival"]/1000
+p_hat.D
+p_hat.U
+rand.dist[i]<-p_hat.D - p_hat.U
+}
+p_value<-mean(abs(rand.dist)>=abs(diff.prop))
+p_value
+
+##Bootstrap
+
+n<-5000
+rand.boot.D<-rep(NA,n)
+rand.boot.U<-rep(NA,n)
+boot.diff<-rep(NA,n)
+#Simulate under phat.1 and phat.2
+for (i in 1:n){
+rand.boot.D[i]<-rbinom(1,1000,phat.D)/1000
+rand.boot.U[i]<-rbinom(1,1000,phat.U)/1000
+boot.diff[i]<-rand.boot.D[i] - rand.boot.U[i]
+}
+hist(boot.diff)
+
+#Two-sided 95% t CI
+diff.prop +c(-1,1)*qnorm(0.975)*sd(boot.diff)
+
+#2
+#Observed Data
+#a
+p_hat<-165/500
+n<-5000
+rand.dist<-rep(NA,n)
+#Simulate under Ho true, p=0.40
+for (i in 1:n){
+rand.dist[i]<-rbinom(1,500,0.40)
+}
+#Determine the proportion of samples greater than the original proportion, p_hat
+p_hat.dist<-rand.dist/500
+p_value<-mean(p_hat.dist>=p_hat)
+p_value
+
+##Bootstrap
+n<-5000
+rand.boot<-rep(NA,n)
+#Simulate under phat.1 and phat.2
+for (i in 1:n){
+rand.boot[i]<-rbinom(1,500,p_hat)/500
+}
+hist(rand.boot)
+
+#One-sided 95% Percentile CI
+quantile(rand.boot,c(0.05) )
+prop.test(165,500,alternative="greater",p=0.40)
+
+#3
+tea<-c(15, 58)
+coffee<-c(11, 47, 55, 18, 16)
+#Calculate the observed difference in means
+#This value will be used to calculate the p-value
+difference<-mean(tea) - mean(coffee)
+difference
+
+n=6300
+rand.dist<-rep(NA,n)
+labels<-c(rep("Tea",2),rep("Coffee",5))
+values<-c(tea,coffee)
+Immun<-data.frame(labels,values)
+#Start the Simulation
+for (i in 1:n){
+sample<-sample(labels)
+rand.dist[i]<-mean(values[sample=="Tea"]) - mean(values[sample=="Coffee"])
+}
+p_value<-mean(abs(rand.dist) >=abs(difference))
+p_value
+hist(rand.dist)
+table(rand.dist)
+
+#4
+data(MustangPrice,package="Lock5Data")
+attach (MustangPrice)
+hist(Price)
+n=5000
+rand.dist<-rep(NA,n)
+mean(Price)
+
+adjustment<-10
+adjusted.price<-Price - (mean(Price)-10)
+for (i in 1:n){
+rand.sample<-sample(25,replace=TRUE)
+rand.dist[i]<-mean(adjusted.price[rand.sample])
+}
+hist(rand.dist)
+abline(v=mean(Price))
+p_value<-mean(rand.dist<=mean(Price))
+p_value
+
+#5
+data(MustangPrice,package="Lock5Data")
+attach (MustangPrice)
+head(MustangPrice)
+model1<-lm(Price~Miles)
+summary(model1)
+plot(Price~Miles,xlab="Miles (in 1,000's)",ylab="Price (in $1,000's)")
+abline(model1)
+cor(Price,Miles)
+sdPrice<-sd(Price)
+sdMiles<-sd(Miles)
+beta1<-cor(Price,Miles)*sdPrice/sdMiles
+beta1
+n=5000
+beta.dist<-rep(NA,n)
+for (i in 1:n){
+Price.rs<-sample(Price,25)
+Miles.rs <-sample(Miles,25)
+beta.dist[i]<-cor(Price.rs,Miles.rs)*sd(Price.rs)/sd(Miles.rs)
+}
+p_value<-mean(abs(beta.dist) >=abs(beta1))
+p_value
+
+beta.boot.dist<-rep(NA,n)
+for (i in 1:n){
+boot.sample<-sample(25,replace=TRUE)
+beta.boot.dist[i] <-cor(Price[boot.sample],Miles[boot.sample])*
+sd(Price[boot.sample])/sd(Miles[boot.sample])
+}
+beta1
+quantile(beta.boot.dist,c(0.025,0.975))
+
+hist(beta.boot.dist)
